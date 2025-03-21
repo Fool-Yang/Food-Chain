@@ -8,7 +8,7 @@ from gymnasium.spaces import Discrete, MultiDiscrete
 
 from pettingzoo import ParallelEnv
 
-MAX_TIMESTEP = 64
+MAX_STEPS = 64
 
 SPACE = "space"
 WALL = "wall"
@@ -69,6 +69,8 @@ class FoodChain(ParallelEnv):
             agent = SNAKE + "_" + str(len(self.possible_agents))
             self.possible_agents.append(agent)
         self.number_of_possible_agents = len(self.possible_agents)
+
+        self.max_steps = MAX_STEPS
 
     def reset(self, seed=None, options=None):
         """Reset set the environment to a starting point.
@@ -230,7 +232,7 @@ class FoodChain(ParallelEnv):
         # get observations
         observations = {agent: self.observe(agent) for agent in self.agents}
 
-        self.done = self.timestep >= MAX_TIMESTEP
+        self.done = self.timestep >= self.max_steps
         # check termination conditions
         terminations = {agent: self.done for agent in self.agents}
         # check truncation conditions (overwrites termination conditions)
