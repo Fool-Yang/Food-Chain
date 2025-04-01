@@ -1,0 +1,234 @@
+\documentclass[a4paper]{article}
+
+% Packages
+\usepackage{geometry}
+\geometry{left=1.5cm, right=1.5cm, top=2.54cm, bottom=2.54cm}
+\usepackage{graphicx, hyperref, setspace, amsmath, amssymb, titlesec, fancyhdr, multicol, parskip, indentfirst, etoolbox, caption, cite, hyperref, xcolor, svg}
+
+% Title Formatting
+\titleformat{\section}{\centering\large\scshape}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{1em}{}
+\setstretch{1.0} % Keep single spacing
+\setlength{\parskip}{6pt} % Space between paragraphs
+\titlespacing{\section}{0pt}{6pt}{6pt}
+\titlespacing{\subsection}{0pt}{6pt}{6pt}
+\titlespacing{\subsubsection}{0pt}{6pt}{6pt}
+% Document Title
+\title{
+    \textbf{Draft v0 (I need to migrate my citation data to latex which is still a mess right now)} 
+}
+
+\date{} % No date
+\captionsetup{labelfont={small,sc}, textfont={small,sc}}
+% Section Numbering
+% Define numbering format
+\renewcommand{\thesection}{\Roman{section}.}
+\renewcommand{\thesubsection}{\textit{\Alph{subsection}.}}
+\renewcommand{\thesubsubsection}{\textit{\arabic{subsubsection}.}}
+\renewcommand{\thetable}{\Roman{table}} % Set table numbering to Roman
+\renewcommand{\thefigure}{\Roman{figure}} % Number figures in Roman numerals
+
+% Make titles italic as well
+
+\titleformat{\subsection}{\normalfont\large\itshape}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalfont\itshape}{\thesubsubsection}{1em}{}
+
+\fancyfoot[L]{\includegraphics[width=1.5cm]{cc-by.png}}  % Adjust path & size
+\fancyfoot[R]{\includegraphics[width=1.5cm]{cc-by.png}}  % Adjust path & size
+\fancyfoot[C]{This work is licensed under a Creative Commons Attribution 4.0 International License.\\ \thepage}
+
+
+\begin{document}
+
+\maketitle
+\vspace{-1.5cm}
+
+% Authors Block
+\begin{multicols}{3}
+    \centering
+    \textbf{Yang Li}\\
+    \textit{University of the West of England}\\
+    \textit{yang4.li@uwe.ac.uk}\\
+    \vfill
+
+    \textbf{Marco Perez Hernandez}\\
+    \textit{University of the West of England}\\
+    \textit{marco.perezhernandez@uwe.ac.uk}\\
+    \vfill
+
+    \textbf{Mehmet Aydin}\\
+    \textit{University of the West of England}\\
+    \textit{mehmet.aydin@uwe.ac.uk}\\
+    \vfill
+\end{multicols}
+
+\singlespacing
+\setlength{\parskip}{6pt}
+\setlength{\parindent}{0.5cm}
+
+\begin{abstract}
+The abstract should be written after the rest of the paper is completed.
+\end{abstract}
+
+\begin{multicols}{2}
+\setlength{\columnsep}{0.5cm}
+
+\section{Introduction}
+Plenty of research has been done on multi-agent reinforcement learning (MARL) in fully cooperative games. There is currently a gap in the non-cooperative setting. In fully cooperative games, there is no conflict between the agents. If agents can communicate, they are motivated to form a firm alliance that essentially works a collective mind which is the one and only conscious being. Thus, in a game theory sense, a fully cooperative game where agents share information is equivalent to a single agent game where the collective agent tries to find the optimal joint action, given the joint observation. To do that in a traditional single agent setting where the environment is stationary and non-adversarial, one only needs to learn the environment mechanics (the state transition function) and the reward function so that the Q-values of an action in a given state can be computed or predicted by a function approximator. A Pareto optimal pure (deterministic) strategy is guaranteed to exist in fully cooperative finite games, meaning that the agents can always deterministically choose the optimal action that has the highest payoff. The only thing that keeps the agents from forming a cluster in practice is the hardware incapability (computational power, real-world constraints, etc.).
+
+Non-cooperative (at least partially competitive) environments, however, involves conflicts that make learning more complicated. Agents might belong to different parties that would like to have private control to protect their own interests. For example, the stock market is often considered a 0-sum fully competitive game where one person's profit is another person's loss, if we omit the long term economic growth.
+
+In fully cooperative games, we can always say that 5 rewards is better than 2 rewards, but what about the rewards $\langle 1,5 \rangle$ and  $\langle 10,1 \rangle$ where each agent gets one value in the vector? Rational self-interested agents will have to fight for what is best for them. Many solutions in game theory are possible. One of the commonly accepted solutions for is the Nash equilibrium (NE). NEs are normally what we want the agents to converge to because convergence means stability and strict NEs are the only stable points in the game. A finite perfect-information game always has a pure NE if the game is asynchronous (players take turns), such as Chess, checkers and Go. Algorithms like minimax tree search can be applied to those games to find NEs. In some cases, there may only be a mixed NE where players adopt randomized strategies consisting of probability distributions over the action space. 
+
+Currently, most SOTA MARL algorithms cannot learn a mixed policy. Largely due to the studied games are mostly fully cooperative or asynchronous. As we will show in the experiments, those algorithms will fail to find the optimal action in games specifically designed to challenge the agents' competitive thinking. We need to reconsider our approach if we want to build agents that are capable of dealing with non-fully-cooperative environments.
+
+\subsection{Aim}
+The aim of this study is to point out that current SOTA algorithms can be misleadingly performing well in non-fully-cooperative environments by both formal analysis and showing specific game scenarios that are designed to challenge the agents from a game theory perspective.
+
+\subsection{Background}
+
+A stochastic game is formally defined by a tuple:
+
+$G = \langle I,S,S_0,S_t,\{A_1,\ldots,A_n\},\{R_1,\ldots,R_n\},T \rangle$
+\begin{itemize}
+    \item $I$: the set of agents, from 1 to \(n\).
+    \item $S$: the game’s state space.
+    \item $S_0$: the set of possible initial states.
+    \item $S_t$: the set of terminal states.
+    \item $\{A_1,\ldots,A_n\}$: one action space for each agent.
+
+    Let $a_i \in A_i$ be an action of agent $i$, and $a^n=\langle a_1,\ldots,a_n \rangle \in A^n$ denote a joint action in the joint action space.
+    \item $\{R_1,\ldots,R_n\}$: one reward function for each agent.
+
+    $R_i:S \times A^n \times S \rightarrow \mathbb{R}$
+    \item $T$: the state transition function.
+
+    $T:S \times A^n \times S \rightarrow [0,1]$
+
+    It defines the probability of the game transitions from one state to another given the joint action. It must satisfy the axiom of probability:
+    \begin{equation}
+    \forall s \in S,a^n \in A^n: \sum_{s' \in S}{T(s,a^n,s')}=1
+    \label{eq:statetransition}
+    \end{equation}
+    It is convenient to define $T^*:S \times A^n \rightarrow \Pi_S$, where $\Pi_S$ denotes the set of all probability distribution over the set S.
+
+    Some games incorporate partial observability and define an observations space, which is irrelevant to the purpose of this study.
+\end{itemize}
+
+ Starting from a randomly chosen $s_0 \in S_0$, at each timestep $t \in \mathbb{N}$ with the current state $s_t$, each agent observes the current state $s_t$ and chooses an action forming a joint action $a^n=\langle a_1,\ldots,a_n \rangle$. The game then moves into the next state $s_{t+1}$, randomly sampled from the distribution P and a reward $R_i$ is assigned to each agent. If $s_t \in S_t$, the game ends. Otherwise, the game continues in the next timestep.
+
+The goal is to find the optimal strategy (policy) for an agent to pick actions given the current state information they receive from the environment, such that their expected reward is maximized.
+
+To demonstrate the problem with competitive games, let's analyze some simple normal form games. A normal form game has only two states, the starting state and the end state. The game ends immediately after all agents pick an action. Thus, they can be represented using the reward matrix. Consider rock-paper-scissors (simple one-shot matrix game) in Table~\ref{table:rps} for example. Each entry represents the reward for the row player and the column player, respectively.
+
+\noindent
+\begin{minipage}{\columnwidth}
+\captionof{table}{Rock Paper Scissors} 
+\label{table:rps}
+\centering
+\begin{tabular}{c|ccc}
+    & r & p & s\\
+    \hline
+    r & 0,0 & -1,1 & 1,-1 \\
+    p & 1,-1 & 0,0 & -1,1 \\
+    s & -1,1 & 1,-1 & 0,0 \\
+\end{tabular}
+\end{minipage}
+
+The only NE in the game is that two players play each of the three actions with 1/3 chance. If any player deviates from the NE, their expected reward does not increase, and the other player can exploit them by playing the action that counters their most frequent action. Here is a more complicated game called biased rock paper scissors.
+
+\noindent
+\begin{minipage}{\columnwidth}
+\captionof{table}{Biased Rock Paper Scissors} 
+\label{table:biasedrps}
+\centering
+\begin{tabular}{c|ccc}
+    & r & p & s\\
+    \hline
+    r & 50,50 & 25,75 & 100,0 \\
+    p & 75,25 & 50,50 & 45,55 \\
+    s & 0,100 & 55,45 & 50,50 \\
+\end{tabular}
+\end{minipage}
+
+The only NE in the game is that both players adopt the following policy.
+\begin{equation}
+\pi=(P(r)=0.0625,P(p)=0.6250,P(s)=0.3125)
+\label{eq:biasedrpspolicy}
+\end{equation}
+
+The RL algorithm needs to learn $\pi$, not the optimal action because there is no optimal action. For competitive play after the learning process, the agent should play randomly according to the learned distribution.
+
+Algorithms that are carried over from the traditional single agent RL domain, such as the Q learning algorithm family, do not incorporate randomized policy. Thus, they cannot learn $\pi$, even though they may behave randomly during the learning process (using an $\epsilon$-greedy exploration vs. exploitation strategy, for example). They learn the Q-value of each action under each state, which is supposed to represent the payoff of that action. They choose the action with the best payoff when they are not exploring. There are research addressing this problem using a manually calculated distribution over the actions based on the payoff, such that the higher the payoff of an action, the more likely the action will be chosen. This approach intuitively makes sense. The problem is that in any NE, for any action that are chosen with a positive probability, the payoff of the actions are the same. If we calculate the expected reward of each action in the biased rock-paper-scissors example where the opponent uses the NE strategy, we will see all three actions have the same payoff.
+
+Suppose the algorithm can converge to a NE, then all Q-values should be the same (ignoring worthless actions). Such an algorithm will output a uniform distribution. The algorithm is essentially learning a pure random policy. This contradicts with the assumption that they converge to a NE. We have shown that approach cannot work through a proof by contradiction.
+
+Most MARL problems studied are much more than single state matrix games and have astronomically large state/action spaces. It is impossible for the agents to converge to a global NE in the first place because of the limited computational power. Because of the complexity of the environment that many studies carry out in, picking the action with the best Q-value still gives reasonably good results since at least the agents learned to interact with the environment. The competitiveness of the game is not going to play a huge role before the agents can really predict the state transitions.
+
+\section{Methods}
+Here I will define the mechanics of the game Food Chain (this is now the official name). I also will have to migrate the tables and charts from my previous Word documents to explain the unique characteristics that make it challenging which are not found in other games (especially compare to the hide and seek game).
+
+The game is complex enough to eliminate any tabular approaches. The state space is roughly 1060 for just a 9x9 board and can grow exponentially. Function approximation methods, such as deep neural networks or Monte Carlo methos must be used to solve the whole game. The spacial information on the game board can also be a good challenge to algorithms using CNNs. The game is still simple enough to be human playable. The mechanics of the game (the state transition function) is very straightforward and easy for the agents to learn, so that they can focus on agent interactions. Because of the large state space, it is impossible for us to check whether the agents converged to a global NE since it is NP-Hard. Yet it has carefully designed mechanics (see my Casual Monthly Progress Report for Nov 2024) which very often force the agents to adopt random policies (and addressing the coordination problem, too). These are the leaf nodes of the game tree, which is equivalent to a simple matrix game. We can actually check whether the agents converge to NEs in those sub-cases easily. So, in summary.
+\begin{itemize}
+    \item It is simple enough to let the agents focus on interactions instead of the environment.
+    \item It is complex enough to be interesting.
+    \item It forces the agents to constantly address the mixed strategy problem.
+    \item We can analyze the performance of the agents with game theory.
+\end{itemize}
+
+\section{Results}
+Figure \ref{fig:hopperreward}, \ref{fig:frogreward}, \ref{fig:snakereward} shows the average test return for each type of agent after training in a randomly generated game environment. Figure \ref{fig:scenhopperreward}, \ref{fig:scenfrogreward} demonstrates that in the carefully set up matching pennies scenario. The results show that the algorithms could not reach the optimal reward which can be computed using linear algebra (which is also another strong aspect of the game. we can analyze the game formally and see whether the agents reached optimality). More formal analysis coming...
+
+\noindent
+\begin{minipage}{\columnwidth}
+\centering
+\includesvg[width=1\textwidth]{plots/rewards_global_hopper.svg}
+\captionof{figure}{hopper rewards}
+\label{fig:hopperreward}
+\end{minipage}
+
+\noindent
+\begin{minipage}{\columnwidth}
+\centering
+\includesvg[width=1\textwidth]{plots/rewards_global_frog.svg}
+\captionof{figure}{frog rewards}
+\label{fig:frogreward}
+\end{minipage}
+
+\noindent
+\begin{minipage}{\columnwidth}
+\centering
+\includesvg[width=1\textwidth]{plots/rewards_global_snake.svg}
+\captionof{figure}{snake rewards}
+\label{fig:snakereward}
+\end{minipage}
+
+\noindent
+\begin{minipage}{\columnwidth}
+\centering
+\includesvg[width=1\textwidth]{plots/rewards_scen_hopper.svg}
+\captionof{figure}{snake rewards}
+\label{fig:scenhopperreward}
+\end{minipage}
+
+\noindent
+\begin{minipage}{\columnwidth}
+\centering
+\includesvg[width=1\textwidth]{plots/rewards_scen_frog.svg}
+\captionof{figure}{snake rewards}
+\label{fig:scenfrogreward}
+\end{minipage}
+
+\section{Discussion}
+
+\section{Conclusion}
+
+\section*{Funding}
+This research was funded by the University of the West of England.
+
+\begin{thebibliography}
+
+\end{thebibliography}
+
+\end{multicols}
+\end{document}
