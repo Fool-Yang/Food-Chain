@@ -1,6 +1,6 @@
 import functools
 from random import Random
-from copy import copy
+from copy import deepcopy
 from itertools import product
 
 import numpy as np
@@ -8,18 +8,20 @@ from gymnasium.spaces import Discrete, MultiDiscrete
 
 from pettingzoo import ParallelEnv
 
-MAX_STEPS = 64
-
+# define constants
 SPACE = "space"
 WALL = "wall"
 FOOD = "food"
 HOPPER = "hopper"
 FROG = "frog"
 SNAKE = "snake"
+AGENT_TYPES = [HOPPER, FROG, SNAKE]
 
-GAME_ELEMENTS = [SPACE, WALL, FOOD] + [HOPPER, FROG, SNAKE]
+# define the numeric inputs for MARL algorithms
+GAME_ELEMENTS = [SPACE, WALL, FOOD] + AGENT_TYPES
 INT_VALUES = {GAME_ELEMENTS[i]: i for i in range(len(GAME_ELEMENTS))}
 
+# define the food chain as a directed graph
 PREDATORS = {
     FOOD: set([HOPPER]),
     HOPPER: set([FROG]),
@@ -37,40 +39,39 @@ class FoodChain(ParallelEnv):
         "name": "food_chain_v0",
     }
 
-    def __init__(self, height=8, width=8, vision_radius=4, hopper=1, frog=1, snake=1):
+    def __init__(self, init_board=None, height=8, width=8, population={}, vision_radius=4, food_reward=0.1, max_steps=64):
         """The init method takes in environment arguments.
         """
+        self.possible_agents = []
+
+        self.init_board = init_board
+        if init_board:
+            self.height = len(init_board)
+            self.width = len(init_board[0])
+            agent_types = set(AGENT_TYPES) # build a set for efficient lookup
+            for y in range(self.height):
+                for x in range(self.width):
+                    element = self.init_board[y][x]
+                    element_type = element.split('_')[0]
+                    if element_type in agent_types:
+                        self.possible_agents.append(element)
+        else:
+            self.height = height
+            self.width = width
+            for agent_type in AGENT_TYPES:
+                for i in range(population.get(agent_type, 1)): # default agent number = 1
+                    agent = agent_type + "_" + str(i)
+                    self.possible_agents.append(agent)
+            self.number_of_possible_agents = len(self.possible_agents)
+
         # vision_radius=None means full observability
         if vision_radius is None:
-            vision_radius = max((height, width))
-
-        # sanity check
-        if height <= 1 or width <= 1:
-            raise ValueError("The game board needs to be at least 2x2.")
-        if hopper <= 0:
-            raise ValueError("The game needs at least one hopper.")
-        if height*width < (hopper + frog + snake)*2:
-            raise ValueError("The game board is too crowded. Make bigger board or less agents")
-
-        self.height = height
-        self.width = width
+            vision_radius = max((self.height, self.width))
         self.vision_radius = vision_radius
+        self.vision_diameter = self.vision_radius*2 + 1
 
-        self.vision_diameter = vision_radius*2 + 1
-
-        self.possible_agents = []
-        for _ in range(hopper):
-            agent = HOPPER + "_" + str(len(self.possible_agents))
-            self.possible_agents.append(agent)
-        for _ in range(frog):
-            agent = FROG + "_" + str(len(self.possible_agents))
-            self.possible_agents.append(agent)
-        for _ in range(snake):
-            agent = SNAKE + "_" + str(len(self.possible_agents))
-            self.possible_agents.append(agent)
-        self.number_of_possible_agents = len(self.possible_agents)
-
-        self.max_steps = MAX_STEPS
+        self.food_reward = food_reward
+        self.max_steps = max_steps
 
     def reset(self, seed=None, options=None):
         """Reset set the environment to a starting point.
@@ -81,51 +82,58 @@ class FoodChain(ParallelEnv):
         if seed is not None:
             self.RNG.seed(seed)
 
-        # divide the map into 4x4 blocks for placing walls and agents
-        blocks_in_a_row = self.width//4
-        blocks_in_a_column = self.height//4
-        blocks = blocks_in_a_row*blocks_in_a_column
-        # choose some random blocks for placing agents from [0, blocks)
-        random_agent_choices = self.RNG.sample(range(blocks), self.number_of_possible_agents)
-        # translate them into coordinates
-        all_positions = list(product(range(self.height), range(self.width)))
-        random_agent_positions = []
-        for i in random_agent_choices:
-            y, x = i//blocks_in_a_row*4, i%blocks_in_a_row*4
-            random_agent_positions.append((y, x))
-        random_wall_positions = []
-        for i in range(blocks):
-            y, x = i//blocks_in_a_row*4 + 1, i%blocks_in_a_row*4 + 1
-            if self.RNG.random() <= 0.5:
-                random_wall_positions.append((y, x))
-            if self.RNG.random() <= 0.5:
-                random_wall_positions.append((y + 1, x))
-            if self.RNG.random() <= 0.5:
-                random_wall_positions.append((y, x + 1))
-            if self.RNG.random() <= 0.5:
-                random_wall_positions.append((y + 1, x + 1))
-
         # initialize agents
-        self.agents = copy(self.possible_agents)
+        self.agents = deepcopy(self.possible_agents)
+        self.agent_positions = {agent: None for agent in self.agents}
+        self.empty_positions = set(product(range(self.height), range(self.width))) # for spawning things on empty tiles
         # dead agents enter an absorbing state instead of being removed from the game
         # they receive no rewards and no observations
         self.dead_agents = set()
 
         # draw the game board
-        # set agents' positions and draw them
-        self.grid = [[SPACE for _ in range(self.width)] for _ in range(self.height)]
-        self.empty_positions = set(all_positions)
-        self.agent_positions = {}
-        counter = 0
-        for i in range(len(self.agents)):
-            y, x = random_agent_positions[i]
-            self.grid[y][x] = self.agents[i]
-            self.agent_positions[self.agents[i]] = (y, x)
-            self.empty_positions.remove((y, x))
-        # draw walls on the board
-        for y, x in random_wall_positions:
-            self.grid[y][x] = WALL
-            self.empty_positions.remove((y, x))
+        if self.init_board:
+            self.grid = deepcopy(self.init_board)
+            for y in range(len(self.grid)):
+                for x in range(len(self.grid[0])):
+                    element = self.grid[y][x]
+                    if element != SPACE:
+                        self.empty_positions.remove((y, x))
+                        if element in self.agent_positions:
+                            self.agent_positions[element] = (y, x)
+        else:
+            self.grid = [[SPACE for _ in range(self.width)] for _ in range(self.height)]
+
+            # divide the map into 4x4 blocks for placing walls and agents
+            blocks_in_a_row = self.width//4
+            blocks_in_a_column = self.height//4
+            blocks = blocks_in_a_row*blocks_in_a_column
+
+            # choose some random blocks for placing agents
+            random_block_choices = self.RNG.sample(range(blocks), self.number_of_possible_agents)
+
+            # draw the agents set their positions
+            for i in range(self.number_of_possible_agents):
+                block_id = random_block_choices[i]
+                y, x = block_id//blocks_in_a_row*4, block_id%blocks_in_a_row*4 # translate the block number into coordinates
+                self.grid[y][x] = self.agents[i]
+                self.agent_positions[self.agents[i]] = (y, x)
+                self.empty_positions.remove((y, x))
+
+            # draw walls on the board
+            for i in range(blocks):
+                y, x = i//blocks_in_a_row*4 + 1, i%blocks_in_a_row*4 + 1 # translate the block number into coordinates
+                if self.RNG.random() <= 0.5:
+                    self.grid[y][x] = WALL
+                    self.empty_positions.remove((y, x))
+                if self.RNG.random() <= 0.5:
+                    self.grid[y + 1][x] = WALL
+                    self.empty_positions.remove((y + 1, x))
+                if self.RNG.random() <= 0.5:
+                    self.grid[y][x + 1] = WALL
+                    self.empty_positions.remove((y, x + 1))
+                if self.RNG.random() <= 0.5:
+                    self.grid[y + 1][x + 1] = WALL
+                    self.empty_positions.remove((y + 1, x + 1))
 
         observations = {agent: self.observe(agent) for agent in self.agents}
 
@@ -213,13 +221,13 @@ class FoodChain(ParallelEnv):
             if predators:
                 new_dead_agents.append(agent)
                 rewards[agent] += -1.0
-                reward = 1.0/len(predators)
+                reward = self.food_reward/len(predators)
                 for predator in predators:
                     rewards[predator] += reward
         for agent in agents_that_got_food:
             agent_type = agent.split('_')[0]
             if agent_type in PREDATORS[FOOD]:
-                rewards[agent] += 0.1
+                rewards[agent] += self.food_reward
 
         # spawn food
         # each empty tile has a chance to spawn food at each timestep
