@@ -39,7 +39,10 @@ class FoodChain(ParallelEnv):
         "name": "food_chain_v0",
     }
 
-    def __init__(self, init_board=None, height=8, width=8, population={}, vision_radius=4, food_reward=0.1, max_steps=64):
+    def __init__(self, init_board=None, height=8, width=8, vision_radius=4,
+                 population={},
+                 food_spawn_chance = 0.005, food_reward=0.1,
+                 max_steps=64):
         """The init method takes in environment arguments.
         """
         self.possible_agents = []
@@ -70,6 +73,7 @@ class FoodChain(ParallelEnv):
         self.vision_radius = vision_radius
         self.vision_diameter = self.vision_radius*2 + 1
 
+        self.food_spawn_chance = food_spawn_chance
         self.food_reward = food_reward
         self.max_steps = max_steps
 
@@ -233,7 +237,7 @@ class FoodChain(ParallelEnv):
         # each empty tile has a chance to spawn food at each timestep
         for y, x in list(self.empty_positions):
             # it's recommended that the chance is no more than 1%
-            if self.RNG.random() <= 0.005:
+            if self.RNG.random() <= self.food_spawn_chance:
                 self.grid[y][x] = FOOD
                 self.empty_positions.remove((y, x))
 
