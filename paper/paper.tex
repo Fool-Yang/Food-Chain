@@ -6,7 +6,7 @@
 %\usepackage[doublespacing]{setspace}% To produce a `double spaced' document if required
 %\setlength\parindent{24pt}% To increase paragraph indentation when line spacing is doubled
 \usepackage{svg}
-
+%\usepackage{biblatex}
 \usepackage[numbers,sort&compress]{natbib}% Citation support using natbib.sty
 \bibpunct[, ]{[}{]}{,}{n}{,}{,}% Citation support using natbib.sty
 \renewcommand\bibfont{\fontsize{10}{12}\selectfont}% Bibliography support using natbib.sty
@@ -42,7 +42,7 @@
 \maketitle
 
 \begin{abstract}
-Multi-agent reinforcement learning has received a lot of updates in cooperative games recently. However, research in general non-cooperative games is currently lagging behind. Value-based algorithms such as Q-learning have been one of the most widely studied methods in reinforcement learning, and their independent variations for multi-agent environments are popular approaches due to their simplicity and good scalability. Some research has shown that independent algorithms can heavily outperform other approaches in some cooperative scenarios. In this paper, we discuss the feasibility of these algorithms in non-cooperative settings. As a result, we explain the conditions a game must satisfy for the algorithms to work. We further propose the game Food Chain. The game simulates an ecosystem and is designed to challenge the algorithms in a way aligned with our formal analysis. Our results show that independent value-based learning algorithms are guaranteed to fail in some non-cooperative games.
+Multi-agent reinforcement learning has received a lot of updates in cooperative games recently. However, research in general non-cooperative games is currently lagging behind. Independent value-based algorithms such as independent Q-learning have been one of the most widely studied methods in the field due to their simplicity and scalability. Some research has shown that independent algorithms can heavily outperform other approaches in some cooperative scenarios. In this paper, we discuss the feasibility of these algorithms in non-cooperative settings. As a result, we explain the conditions a game must satisfy for the algorithms to work. We further propose the game Food Chain that simulates an ecosystem and is designed to challenge the algorithms in a way aligned with our formal analysis. Our results show that independent value-based learning algorithms are guaranteed to fail in some non-cooperative games but are more likely to work in cooperative games.
 \end{abstract}
 
 \begin{keywords}
@@ -99,7 +99,7 @@ In this section, we provide preliminaries including the formal definition of a g
 
 \subsection{Stochastic Game}
 A game is formally defined by a tuple:
-$G = \langle I,S,S_0,S_t,\{A_1,\ldots,A_n\},\{R_1,\ldots,R_n\},T \rangle$
+$G = \langle N,S,S_0,S_t,\{A_1,\ldots,A_n\},\{R_1,\ldots,R_n\},T \rangle$
 \begin{itemize}
     \item $N = \{1, ..., n\}$: the set of agents, numbered from 1 to $n$.
     \item $S$: the game’s state space.
