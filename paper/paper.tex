@@ -42,7 +42,9 @@
 \maketitle
 
 \begin{abstract}
-Multi-agent reinforcement learning has received a lot of updates in cooperative games recently. However, research in general non-cooperative games is currently lagging behind. Independent value-based algorithms such as independent Q-learning have been one of the most widely studied methods in the field due to their simplicity and scalability. Some research has shown that independent algorithms can heavily outperform other approaches in some cooperative scenarios. In this paper, we discuss the feasibility of these algorithms in non-cooperative settings. As a result, we explain the conditions that a game must satisfy for the algorithms to work. We further propose the game Food Chain that simulates an ecosystem and is designed to challenge the algorithms in a way aligned with our analysis. Our results show that independent value-based learning algorithms are guaranteed to fail in some non-cooperative games but are more likely to work in cooperative games.
+Multi-agent reinforcement learning has received increased attention in cooperative games recently. However, research in general non-cooperative games is currently lagging behind. Independent value-based algorithms, such as independent Q-learning, have demonstrated simple implementation and versatility in various contexts. Previous research has shown that independent algorithms can heavily outperform other approaches in some cooperative scenarios. In this paper, we study the behaviour of these algorithms in non-cooperative settings. As a result, we explain the conditions that a game must satisfy for the algorithms to work. We further propose the game Food Chain that simulates an ecosystem and is designed to challenge the algorithms in a way aligned with our analysis. We collect empirical data on the performance of selected algorithms from experiments based on the proposed game. Our results show that independent value-based learning algorithms
+can converge to Nash equilibrium in non-cooperative environments, only when the Nash equilibrium consists of uniformly random policies over the feasible actions.
+%are guaranteed to fail in some non-cooperative games but are more likely to work in cooperative games.
 \end{abstract}
 
 \begin{keywords}
@@ -84,7 +86,7 @@ Independent learning (IL) algorithms that are carried over from the traditional 
     \textbf{softmax}([x_1, ..., x_n]) = [\frac{e^{x_1}}{\sum_{i}{e^{x_i}}}, ..., \frac{e^{x_n}}{\sum_{i}{e^{x_i}}}]
     \label{eq:softmax}
 \end{equation}
-The latter approach emphasis the action with higher empirical return. However, these approaches have a huge problem that guarantees failure of learning in a wide range of games. We will take a closer look in the analysis section.
+The latter approach emphasis the action with higher empirical return. However, these approaches have a problem that guarantees failure of learning in a wide range of games. We will take a closer look in the analysis section.
 
 Unlike IL, joint action learning (JAL) algorithms allow the agent to gain access to the information processed by all other agents, such as their choices of actions, so agents can learn the expected return of joint actions. Minimax Q-learning \cite{littman1994markov} is a JAL algorithm that can be applied to two-player zero-sum games. It computes local minimax solutions for each state based on the learned joint Q-values. Nash Q-learning \cite{hu2003nash} is a similar algorithm that computes the local NE instead. It converges to a NE under highly strict assumptions that reduce the applicability of the approach to a limited set of games. Correlated Q-learning \cite{greenwald2003correlated} computes a correlated equilibrium and has no known convergence guarantees. Zinkevich et al \cite{zinkevich2005cyclic} showed that JAL cannot converge in certain types of ill-conditioned games. Centralized learning requires full knowledge of the action spaces of all agents, which may not always be available if we are dealing with real-world problems. Another major disadvantage is that the number of joint actions is the number of possible combinations of the individual actions. This introduces combinatorics to the computational complexity of our algorithms, making them unscalable.
 
@@ -190,16 +192,16 @@ To verify our analysis, we test the algorithms in a game that can turn on and of
 \begin{figure}
 \centering
 \subfloat[A Food Web]{
-    \resizebox*{0.5\textwidth}{!}{
+    \resizebox*{0.48\textwidth}{!}{
         \includegraphics{images/food_web.png}
     }
 }
 \subfloat[The Food Chain Game]{
-    \resizebox*{0.5\textwidth}{!}{
+    \resizebox*{0.48\textwidth}{!}{
         \includegraphics{images/food_chain_game.png}
     }
 }
-\caption{(a), A food web represents a simple ecosystem. The food web is a cluster of multiple food chains showing what-eats-what. The arrows point in the direction of the energy flow. (b), In the food chain game, an agent represents an individual animal of some type. They navigate on a playground trying to feed themselves while avoiding enemies.}
+\caption{(a), A food web represents a simple ecosystem. The food web is a cluster of multiple food chains showing what-eats-what. The arrows point in the direction of the energy flow. (b), In the Food Chain game, an agent represents an individual animal of some type. They navigate on a playground trying to feed themselves while avoiding enemies.}
 \label{fig:food_chain_game}
 \end{figure}
 
@@ -214,7 +216,7 @@ The size of the state space grows exponentially with respect to the size of the 
 \end{itemize}
 
 \section{Experimental Evaluation}
-Too see how Food Chain can turn on/off the necessary condition (\ref{eq:necessary_condition}) for IVBL to converge, we design two scenarios. The key difference between the two is that one satisfies the condition (\ref{eq:necessary_condition}) and the other does not. We define a simple food web consisting of frogs and hoppers. Hoppers (represented by h) can consume vegetation (drawn as *) and will be eaten by frogs (f). Both scenarios will turn off random food generation.
+Too see how Food Chain can turn on/off the necessary condition (\ref{eq:necessary_condition}) for IVBL to converge, we design two scenarios. The key difference between the two is that one satisfies the condition (\ref{eq:necessary_condition}) and the other does not. We define a simple food web consisting of frogs and hoppers. Hoppers (represented by h) can consume vegetation (drawn as *) and will be eaten by frogs (f). Both scenarios turns off vegetation generation.
 
 \begin{figure}
 \centering
@@ -227,13 +229,13 @@ Too see how Food Chain can turn on/off the necessary condition (\ref{eq:necessar
     \begin{minipage}{0.48\textwidth}
         \centering
         \includegraphics[width=0.9\textwidth]{images/tree_maze_chase.png}
-        \caption{The initial state of Tree Maze Chase in Food Chain. The frog (f) is chasing the hooper (h) in the maze. There is an optimal pure (deterministic) policy for both players.}
+        \caption{The initial state of Tree Maze Chase in Food Chain. The frog (f) is chasing the hopper (h) in the maze. There is an optimal pure (deterministic) policy for both players.}
         \label{fig:tree_maze_chase}
     \end{minipage}
 \end{figure}
 
 \subsection{Biased Rock-Paper-Scissors in Food Chain}
-This case violates condition (\ref{eq:necessary_condition}) and forces the agents to address the mixed policy problem. The initial state of the scenario consists of a frog trying to hunt down a hopper as shown in Figure~\ref{fig:biased_rps_in_food_chain}. We can see that in some cases the hopper can escape. If they both pass, they will face the exact same situation again. Figure~\ref{fig:biased_rps_in_food_chain_possible_next_states} in the appendix shows all possible next states. For simplicity, we set the max timestep to 1, so the game ends after one move. The scenario becomes a normal form mini game. To break the symmetry so that condition (\ref{eq:necessary_condition}) is violated, we add food in one cell, making the scenario essentially biased RPS. We also raise the feeding reward for both agents to 0.5 to highlight the asymmetry. The reward matrix is shown in Table~\ref{table:biased_rps_in_food_chain_reward_matrix} in the appendix. We can verify that there is a unique NE in the game.
+This case violates condition (\ref{eq:necessary_condition}). The initial state of the scenario consists of a frog trying to hunt down a hopper as shown in Figure~\ref{fig:biased_rps_in_food_chain}. We can see that in some cases the hopper can escape. If they both pass, they will face the exact same situation again. Figure~\ref{fig:biased_rps_in_food_chain_possible_next_states} in the appendix shows all possible next states. We set the max timestep to 1, so the scenario becomes a normal form game. To break the symmetry so that condition (\ref{eq:necessary_condition}) is violated, we add vegetation in one cell, making the scenario essentially biased RPS. We also raise the feeding reward for both agents to 0.5 to highlight the asymmetry. The reward matrix is shown in Table~\ref{table:biased_rps_in_food_chain_reward_matrix} in the appendix. We can verify that there is a unique NE in the game.
 \begin{equation}
     \pi_h=(P(r)=\frac{1}{3},P(d)=\frac{1}{3},P(p)=\frac{1}{3})
     \label{eq:biased_rps_in_food_chain_hopper_policy}
@@ -242,29 +244,25 @@ This case violates condition (\ref{eq:necessary_condition}) and forces the agent
     \pi_f=(P(l)=\frac{1}{13},P(u)=\frac{6}{13},P(p)=\frac{6}{13})
     \label{eq:biased_rps_in_food_chain_frog_policy}
 \end{equation}
-The expected reward for the hooper and the frog should be $-7/13 \approx -0.538$ and $1/3 \approx 0.333$, respectively.
+The expected reward for the hopper and the frog should be $-7/13 \approx -0.538$ and $1/3 \approx 0.333$, respectively.
 
-In the Food Chain game, because all agents have the same mobility, a single predator can only capture a prey by trapping them in a corner. Thus, any predator, unless working in a team, has to face this subcase at some point during a general Food Chain game played on an open ground. This means that the scenario represents a subgame which will show up frequently in a full game.
+In the Food Chain game, because all agents have the same mobility, a predator can only capture a prey by trapping them in a corner. Thus, any predator, unless working in a team, has to face this subcase at some point during a general Food Chain game played on an open ground. The scenario represents a subgame which shows up frequently in a full game.
 
 \subsection{Tree Maze Chase in Food Chain}
-This scenario essentially turns off the mixed policy problem, so condition (\ref{eq:necessary_condition}) is met. We set up the initial state of the game as shown in Figure~\ref{fig:tree_maze_chase} where a frog is chasing a hopper in a maze. This map resembles a tree structure (no cycles) which ensures that there is a pure NE in the game, because there is always an optimal action for both players. The hooper should go for the tunnel with more food and the frog should simply chase the hopper. This means the necessary condition (\ref{eq:necessary_condition}) is satisfied. To make sure that at most two food can be picked up by the hopper, we set the max timestep to 12. The optimal rewards for the hopper and the frog are -0.8 and 1, respectively.
+This scenario essentially turns off the mixed policy problem. We set up the initial state as shown in Figure~\ref{fig:tree_maze_chase} where a frog is chasing a hopper in a maze. This map resembles a tree structure (no cycles) which creates a pure NE, because there is always an optimal action. The hopper should go for the tunnel with more vegetation and the frog should simply chase the hopper. The necessary condition (\ref{eq:necessary_condition}) is satisfied. To make sure that at most two vegetations can be picked up by the hopper, we set the max timestep to 12. The optimal rewards for the hopper and the frog are -0.8 and 1, respectively.
 
 \subsection{Results and Discussion}
-In both scenarios, we test the IVBL algorithm IQL and the independent policy-based algorithm IPPO. All experiments were run for 800 iterations. For each iteration, the algorithm collects 640 timesteps as training samples and train the neural network. After each training iteration, 50 evaluation games are run during the evaluation phase. The plots show the average reward for each agent during the evaluation phase. Each experiment is run 20 times to mitigate the effect of randomness and the graphs show the boots trapped 95\% confidence interval. In total, each data point on the graph is the average result of $20 \times 50 = 1000$ evaluation games. More details of the parameters for the experiments can be found in Table~\ref{table:experiments_parameters} in the appendix.
-
-Figure~\ref{fig:biased_rps_in_food_chain_rewards} demonstrates the performance of the algorithms in the biased RPS scenario where the necessary condition (\ref{eq:necessary_condition}) for IVBL to converge is not met. The results show that the IVBL algorithm IQL failed to converge to a defined solution range and were struggling to stabilize itself. The hopper's reward fluctuates between -1 and -0.2, where the optimal value is -0.538. These value can be as far as 85\% away from the desired amount. The frog reward oscillates in the range [0.2, 0.5], which is in a $\pm 70\%$  range from the actual NE (0.333). For comparison, the independent policy-based learning algorithm IPPO achieves a reward that stays more in the optimal range and is far more stable which indicates the agents are converging towards the NE.
-
-In contrast, IVBL does significantly better in the tree maze scenario, as shown in Figure~\ref{fig:tree_maze_chase_rewards}. This time, the game scenario satisfies the condition (\ref{eq:necessary_condition}). Although still unstable, IQL can roughly reach the optimal reward at the end. The optimal rewards for the hopper and the frog are -0.8 and 0.1, respectively. Even in this case, the policy-based method still appears to be more reliable than IVBL.
+We tested the IVBL algorithm IQL and the independent policy-based algorithm IPPO in both scenarios. All experiments ran for 800 iterations. For each iteration, the algorithm collects 640 timesteps as training samples and train the neural network before 50 evaluation games were run. The plots show the average reward for each agent during the evaluation phase. Each experiment was run 20 times to mitigate the effect of randomness and the graphs show the boots trapped 95\% confidence interval. More details of the parameters for the experiments can be found in Table~\ref{table:experiments_parameters} in the appendix.
 
 \begin{figure}
 \centering
 \subfloat[Biased RPS Hopper Rewards]{
-    \resizebox*{0.46\textwidth}{!}{
+    \resizebox*{0.48\textwidth}{!}{
         \includesvg{plots/food_chain_biased_rps_hopper_return.svg}
     }
 }
 \subfloat[Biased RPS Frog Rewards]{
-    \resizebox*{0.46\textwidth}{!}{
+    \resizebox*{0.48\textwidth}{!}{
         \includesvg{plots/food_chain_biased_rps_frog_return.svg}
     }
 }
@@ -275,12 +273,12 @@ In contrast, IVBL does significantly better in the tree maze scenario, as shown 
 \begin{figure}
 \centering
 \subfloat[Tree Maze Chase Hopper Rewards]{
-    \resizebox*{0.46\textwidth}{!}{
+    \resizebox*{0.48\textwidth}{!}{
         \includesvg{plots/food_chain_tree_maze_chase_hopper_return.svg}
     }
 }
 \subfloat[Tree Maze Chase Frog Rewards]{
-    \resizebox*{0.46\textwidth}{!}{
+    \resizebox*{0.48\textwidth}{!}{
         \includesvg{plots/food_chain_tree_maze_chase_frog_return.svg}
     }
 }
@@ -288,8 +286,14 @@ In contrast, IVBL does significantly better in the tree maze scenario, as shown 
 \label{fig:tree_maze_chase_rewards}
 \end{figure}
 
+Figure~\ref{fig:biased_rps_in_food_chain_rewards} demonstrates the performance of the algorithms in the biased RPS scenario where the necessary condition (\ref{eq:necessary_condition}) for IVBL to converge is not met. The results show that the IVBL algorithm IQL failed to converge to a defined solution range and were struggling to stabilize itself. The hopper's reward fluctuates between -1 and -0.2, where the optimal value is -0.538. These value can be as far as 85\% away from the desired amount. The frog reward oscillates in the range [0.2, 0.5], which is in a $\pm 70\%$  range from the actual NE (0.333). For comparison, the independent policy-based learning algorithm IPPO achieves a reward that stays more in the optimal range and is far more stable which indicates the agents are converging towards the NE.
+
+In contrast, IVBL does significantly better in the tree maze scenario, as shown in Figure~\ref{fig:tree_maze_chase_rewards}. This time, the game scenario satisfies the condition (\ref{eq:necessary_condition}). Although still unstable, IQL can roughly reach the optimal reward at the end. The optimal rewards for the hopper and the frog are -0.8 and 0.1, respectively. Even in this case, the policy-based method still appears to be more reliable than IVBL.
+
 \section{Conclusion}
-In this work, we have analysed the stability of IVBL algorithms in non-cooperative games and tested their performance in specific game scenarios. A necessary condition (\ref{eq:necessary_condition}) for IVBL algorithms to converge to a NE in finite games was identified. The condition requires the game to have a NE where every agent's policy evenly chooses their worthy actions (actions that are played with a positive probability). This explains why we may observe satisfying results when applying IVBL to games with pure NEs including cooperative games. We further proposed the game Food Chain which has certain traits that can verify our analysis. The test results show that IVBL algorithms perform poorly in scenarios where the condition (\ref{eq:necessary_condition}) is violated. Our work is limited to small two-player scenarios in the Food Chain game. There are still interesting characteristics of the game that may be explored in the future. Such as the extension in both the number of agents and the number of species in the food web.
+In this work, we have analysed the stability of independent value-based learning (IBVL) algorithms in non-cooperative games and tested their performance in specific game scenarios. By means of proof by contradiction and the design of experiments based on the proposed Food Chain game, we found that the studied algorithms only converge to Nash equilibrium (NE) in non-cooperative settings when every agent's policy evenly chooses the next action among their worthy actions (actions that are played with a positive probability). This explains why promising results are achieved when applying IVBL to games with pure NE, including cooperative games.
+
+This work also proposes the Food Chain game which has certain traits ---such as ease of navigation, focus on interactions, and extendability, among others--- that are instrumental for the analysis of the stability in non-cooperative settings. The test results show that IVBL algorithms perform poorly in scenarios where the identified condition is violated. Our work is limited to small two-player scenarios in the Food Chain game. There are still interesting characteristics of the game that will be explored in the future. Such as the extension in both the number of agents and the number of species on the food web.
 
 \section*{Acknowledgements}
 The authors sincerely gratitude the creators of the MARL library BenchMARL \cite{bettini2024benchmarl}, which was used to run the experiments.
@@ -304,7 +308,7 @@ This research was funded by the University of the West of England.
 \appendix
 
 \section{Biased RPS in Food Chain}
-Figure~\ref{fig:biased_rps_in_food_chain_possible_next_states} shows all the possible next state of the Biased RPS scenario in Food Chain. Table~\ref{table:biased_rps_in_food_chain_reward_matrix} describes the reward matrix of the scenario (note that if both agents try to move into the food tile, the hopper only has a 50\% chance to get food).
+Figure~\ref{fig:biased_rps_in_food_chain_possible_next_states} shows all the possible next state of the Biased RPS scenario in Food Chain. Table~\ref{table:biased_rps_in_food_chain_reward_matrix} describes the reward matrix of the scenario (note that if both agents try to move into the vegetation tile, the hopper only has a 50\% chance to get the vegetation).
 
 \begin{figure}
 \centering
@@ -340,7 +344,7 @@ Figure~\ref{fig:biased_rps_in_food_chain_possible_next_states} shows all the pos
         max timestep & 1 & 12 \\
         feeding reward & 0.5 & 0.1 \\
         death reward & \multicolumn{2}{c}{-1} \\
-        food spawn chance & \multicolumn{2}{c}{0} \\
+        vegetation spawn chance & \multicolumn{2}{c}{0} \\
         number of agents & \multicolumn{2}{c}{2} \\
         agent types & \multicolumn{2}{c}{2} \\
         \midrule
