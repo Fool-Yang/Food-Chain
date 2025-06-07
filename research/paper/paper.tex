@@ -42,13 +42,11 @@
 \maketitle
 
 \begin{abstract}
-Multi-agent reinforcement learning has received increased attention in cooperative games recently. However, research in general non-cooperative games is currently lagging behind. Independent value-based algorithms, such as independent Q-learning, have demonstrated simple implementation and versatility in various contexts. Previous research has shown that independent algorithms can heavily outperform other approaches in some cooperative scenarios. In this paper, we study the behaviour of these algorithms in non-cooperative settings. As a result, we explain the conditions that a game must satisfy for the algorithms to work. We further propose the game Food Chain that simulates an ecosystem and is designed to challenge the algorithms in a way aligned with our analysis. We collect empirical data on the performance of selected algorithms from experiments based on the proposed game. Our results show that independent value-based learning algorithms
-can converge to Nash equilibrium in non-cooperative environments, only when the Nash equilibrium consists of uniformly random policies over the feasible actions.
-%are guaranteed to fail in some non-cooperative games but are more likely to work in cooperative games.
+Multi-agent reinforcement learning has received increased attention in cooperative games. However, research in non-cooperative games is lagging behind. Independent value-based learning algorithms have demonstrated simplicity and versatility in various contexts. In this paper, we study the behaviour of these algorithms in non-cooperative settings. We explain the conditions that a game must satisfy for the algorithms to work. We further test the algorithms in our proposed game Food Chain that simulates an ecosystem. Our results show that independent value-based learning algorithms can converge to Nash equilibrium, only when the Nash equilibrium consists of uniformly random policies over the feasible actions.
 \end{abstract}
 
 \begin{keywords}
-Multi-agent; reinforcement learning; independent value-based learning; game theory; non-cooperative games; competitive games; Nash equilibrium
+Multi-agent; reinforcement learning; independent value-based learning; game theory; non-cooperative games; competitive games; Nash equilibrium; food chain; food web; ecosystem
 \end{keywords}
 
 \section{Introduction}
@@ -187,23 +185,24 @@ Because in cooperative games, there is no need to use mixed strategies, the NEs 
 Then how did the researchers still find the appealing outcome of IVBL in some non-cooperative games \cite{bjornsson2009cadiaplayer, jiang2018q, kopacz2023evaluating, qu2020distributed}? The behaviour of IVBL can be highly problem-dependent, so we provide only high-level insights here. MARL problems studied in the real world can have large state/action spaces. For example, a $19 \times 19$ Go board can have roughly $3^{19 \times 19} = 10^{172}$ states. It may be too difficult for the agents to converge to a global NE because of the limited computational power. Because of the complexity of the environment mechanics itself, the competitiveness of the game is not going to play an enormous role before agents can reliably predict the state transitions. Picking the action with the best Q-value still gives reasonably good results, since at least the agents learned to interact with the environment.
 
 \section{The Food Chain Game}
-To verify our analysis, we test the algorithms in a game that can turn on and off the necessary condition given Equation~(\ref{eq:necessary_condition}) described in the previous section. We define the mechanics of the game Food Chain. An agent in the game represents an animal of some type. They can move around the map and feed themselves while trying to avoid enemies. Example game scenarios are shown in Figure~\ref{fig:biased_rps_in_food_chain} and Figure~\ref{fig:tree_maze_chase}. The game simulates an ecosystem to a certain extend, by defining a food web structure. A food web is a cluster of food chains showing what-eats-what in the ecosystem as illustrated in Figure~\ref{fig:food_chain_game}. The food web in the game is completely customizable and we can define an arbitrary number of species (agent types) and any number of agents of each type. This game is essentially a generalized version of the classic predator-and-prey problem. Recent research has tested IQL in the predator-and-prey game and found the algorithm to be seemingly performing well \cite{kopacz2023evaluating}. As we stated, these results could be misleading.
+To verify our analysis, we test the algorithms in a game that can turn on and off the necessary condition given Equation~(\ref{eq:necessary_condition}) described in the previous section. We define the mechanics of the game Food Chain. An agent in the game represents an animal of some type. They can move around the map and feed themselves while trying to avoid enemies. The game simulates an ecosystem to a certain extend, by defining a food web structure. A food web is a cluster of food chains showing what-eats-what in the ecosystem as illustrated in Figure~\ref{fig:food_chain_game}. The food web in the game is completely customizable and we can define an arbitrary number of species (agent types) and any number of agents of each type. This game is essentially a generalized version of the classic predator-and-prey problem. Recent research has tested IQL in the predator-and-prey game and found the algorithm to be seemingly performing well \cite{kopacz2023evaluating}. As we stated, these results could be misleading.
 
 \begin{figure}
 \centering
-\subfloat[A Food Web]{
+\subfloat[A Food Web\textsuperscript{1}]{
     \resizebox*{0.48\textwidth}{!}{
         \includegraphics{images/food_web.png}
     }
 }
-\subfloat[The Food Chain Game]{
+\subfloat[The Food Chain Game\textsuperscript{1}]{
     \resizebox*{0.48\textwidth}{!}{
         \includegraphics{images/food_chain_game.png}
     }
 }
-\caption{(a), A food web represents a simple ecosystem. The food web is a cluster of multiple food chains showing what-eats-what. The arrows point in the direction of the energy flow. (b), In the Food Chain game, an agent represents an individual animal of some type. They navigate on a playground trying to feed themselves while avoiding enemies.}
+\caption[Caption for LOF]{(a), A food web represents a simple ecosystem. The food web is a cluster of multiple food chains showing what-eats-what. The arrows point in the direction of the energy flow. (b), In the Food Chain game, an agent represents an individual animal of some type. They navigate on a playground trying to feed themselves while avoiding enemies.}
 \label{fig:food_chain_game}
 \end{figure}
+\footnotetext[1]{The individual animal avatars were generated by ChatGPT GPT-4-turbo model which includes image generation via DALL·E 3, provided by OpenAI.}
 
 The game is played on a $w \times h$ grid. Each agent is placed in one of the tiles. There are also obstacles placed on the map. These could be randomly generated using a procedural algorithm or predefined. The state space $S$ contains all possible configurations of the $w \times h$ game board. A game board configuration includes the current timestep $t$, as well as the locations of all the agents, vegetation and obstacles. All positions $(x, y)$ must be unique and satisfy $1 \le x \le w, 1 \le y \le h$. Any state could be an initial state. A state is terminal if $t$ reaches some preset maximum timestep. The action space $A = \{\textbf{up, down, left, right, pass}\}$ is the same for all agents. The state transition function maps the current state and the choices of actions to the next state by executing the agents' actions in a natural way. Agents choose their actions to move along the direction by one cell. Moves resulting in an illegal position will be regarded as pass. If multiple agents try to occupy the same cell, only a randomly selected agent will succeed and the rest will execute the pass action. If an agent is moving away from its current cell, then it is allowed for another agent to enter this cell without conflicts, unless two agents are trying to swap location (this rule prevents agents from passing through each other). The reward function works as follows. After the state transition, if a predator is adjacent to (i.e. within a Manhattan distance of 1) a prey, the prey dies and is removed from the game. Agents receive some negative reward (-1 by default) when they die. Each empty tile also has a chance to grow vegetation each turn. Vegetation is part of the food web and will be destroyed when an agent enter the tile. If the vegetation is a prey to the agent, it will be consumed (this is different from agents eating agents where they only need to be adjacent). Agents get reward (0.1 by default) when they eat. If multiple predators capture a prey at the same time, they must share the reward equally.
 
