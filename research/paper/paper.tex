@@ -251,7 +251,7 @@ In the Food Chain game, because all agents have the same mobility, a predator ca
 This scenario essentially turns off the mixed policy problem. We set up the initial state as shown in Figure~\ref{fig:tree_maze_chase} where a frog is chasing a hopper in a maze. This map resembles a tree structure (no cycles) which creates a pure NE, because there is always an optimal action. The hopper should go for the tunnel with more vegetation and the frog should simply chase the hopper. The necessary condition (\ref{eq:necessary_condition}) is satisfied. To make sure that at most two vegetations can be picked up by the hopper, we set the max timestep to 12. The optimal rewards for the hopper and the frog are -0.8 and 1, respectively.
 
 \subsection{Results and Discussion}
-We tested the IVBL algorithm IQL and the independent policy-based algorithm IPPO in both scenarios. All experiments ran for 800 iterations. For each iteration, the algorithm collects 640 timesteps as training samples and train the neural network before 50 evaluation games were run. The plots show the average reward for each agent during the evaluation phase. Each experiment was run 20 times to mitigate the effect of randomness and the graphs show the boots trapped 95\% confidence interval. More details of the parameters for the experiments can be found in Table~\ref{table:experiments_parameters} in the appendix.
+We tested the IVBL algorithm IQL and the independent policy-based algorithm IPPO in both scenarios. The experiments were run using the open-source MARL library BenchMARL \cite{bettini2024benchmarl}. All experiments ran for 800 iterations. For each iteration, the algorithm collects 640 timesteps as training samples and train the neural network before 50 evaluation games were run. The plots show the average reward for each agent during the evaluation phase. Each experiment was run 20 times to mitigate the effect of randomness and the graphs show the boots trapped 95\% confidence interval. More details of the parameters for the experiments can be found in Table~\ref{table:experiments_parameters} in the appendix.
 
 \begin{figure}
 \centering
@@ -293,9 +293,6 @@ In contrast, IVBL does significantly better in the tree maze scenario, as shown 
 In this work, we have analysed the stability of independent value-based learning (IBVL) algorithms in non-cooperative games and tested their performance in specific game scenarios. By means of proof by contradiction and the design of experiments based on the proposed Food Chain game, we found that the studied algorithms only converge to Nash equilibrium (NE) in non-cooperative settings when every agent's policy evenly chooses the next action among their worthy actions (actions that are played with a positive probability). This explains why promising results are achieved when applying IVBL to games with pure NE, including cooperative games.
 
 This work also proposes the Food Chain game which has certain traits ---such as ease of navigation, focus on interactions, and extendability, among others--- that are instrumental for the analysis of the stability in non-cooperative settings. The test results show that IVBL algorithms perform poorly in scenarios where the identified condition is violated. Our work is limited to small two-player scenarios in the Food Chain game. There are still interesting characteristics of the game that will be explored in the future. Such as the extension in both the number of agents and the number of species on the food web.
-
-\section*{Acknowledgements}
-The authors sincerely gratitude the creators of the MARL library BenchMARL \cite{bettini2024benchmarl}, which was used to run the experiments.
 
 \section*{Funding}
 This research was funded by the University of the West of England.
