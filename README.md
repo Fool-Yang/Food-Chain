@@ -1,1 +1,1 @@
-This is a generalized version of the classic game Predator and Prey. It serves as a test ground for multi-agent reinforcement learning (MARL) algorithms. Descriptions are in the research paper.
+This is a generalized version of the classic game Predator and Prey. The code uses PettingZoo API https://pettingzoo.farama.org/api/parallel/. It serves as a test ground for multi-agent reinforcement learning (MARL) algorithms. Descriptions are in the research paper "Behavioural analysis of independent value-based learning in non-cooperative games".
